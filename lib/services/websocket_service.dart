@@ -6,7 +6,7 @@ class WebSocketService extends ChangeNotifier {
   WebSocketChannel? channel;
 
   Future<void> connect(String token) async {
-    final url = "ws://chat-api-ey7r.onrender.com/ws?token=$token";
+    final url = "wss://chat-api-ey7r.onrender.com/ws?token=$token";
     try {
       channel = await WebSocketChannel.connect(Uri.parse(url));
       debugPrint("Connected to websocket successfully");
