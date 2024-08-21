@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:chat/services/api_service.dart';
 import 'package:chat/services/websocket_service.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -17,13 +16,7 @@ class ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeWebSocket();
-  }
-
-  Future<void> _initializeWebSocket() async {
-    final token = await Provider.of<ApiService>(context, listen: false).getToken();
     _webSocketService = Provider.of<WebSocketService>(context, listen: false);
-    _webSocketService.connect(token!);
   }
 
   void _sendMessage() {
@@ -62,7 +55,9 @@ class ChatScreenState extends State<ChatScreen> {
                 Expanded(
                   child: TextField(
                     controller: _messageController,
-                    decoration: const InputDecoration(hintText: 'Enter your message'),
+                    decoration: const InputDecoration(
+                      hintText: 'Enter your message',
+                    ),
                   ),
                 ),
                 IconButton(

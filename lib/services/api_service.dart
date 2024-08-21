@@ -22,7 +22,7 @@ class ApiService {
 
   Future<http.Response> getConversations() async {
     final token = await getToken();
-    final url = Uri.parse('$baseUrl/messages/recent-conversations');
+    final url = Uri.parse('$baseUrl/messages/recent');
     return await http.get(url, headers: _headers(token));
   }
 

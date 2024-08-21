@@ -1,6 +1,6 @@
+import 'package:chat/provider/api_service_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:chat/services/api_service.dart';
 import 'package:chat/screens/login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -19,8 +19,8 @@ class RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _phoneNumberController = TextEditingController();
 
   void _register() async {
-    final api = Provider.of<ApiService>(context, listen: false);
-    final response = await api.registerUser({
+    final apiServiceProvider = Provider.of<ApiServiceProvider>(context, listen: false);
+    final response = await apiServiceProvider.registerUser({
       'username': _usernameController.text,
       'email': _emailController.text,
       'password': _passwordController.text,
