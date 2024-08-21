@@ -99,7 +99,7 @@ class LoginScreenState extends State<LoginScreen> {
         setState(() {
           _isLoading = false;
         });
-        Navigator.pushNamed(context, '/chat');
+        Navigator.pushReplacementNamed(context, '/home');
       } catch (e) {
         setState(() {
           _isLoading = false;
