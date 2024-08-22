@@ -83,6 +83,10 @@ class ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, size: 24.0),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Row(
           children: [
             CircleAvatar(
@@ -97,9 +101,12 @@ class ChatScreenState extends State<ChatScreen> {
           ],
         ),
         actions: [
-          InkWell(
-            child: const Icon(Icons.more_horiz),
-            onTap: () {},
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: InkWell(
+              child: const Icon(Icons.more_horiz),
+              onTap: () {},
+            ),
           )
         ],
       ),
@@ -127,17 +134,26 @@ class ChatScreenState extends State<ChatScreen> {
                 Expanded(
                   child: TextField(
                     controller: _messageController,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter your message',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: 'Type a message...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16.0),
                     ),
+                    onSubmitted: (text) => _sendMessage(),
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.send),
+                FloatingActionButton(
                   onPressed: _sendMessage,
-                  color: Colors.blue,
+                  backgroundColor: Colors.blueAccent,
+                  shape: const CircleBorder(),
+                  child: const Icon(Icons.send),
                 ),
               ],
             ),

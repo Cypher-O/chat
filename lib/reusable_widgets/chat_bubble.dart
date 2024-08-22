@@ -41,7 +41,7 @@ class ChatBubble extends StatelessWidget {
               ),
               Padding(
                 padding:
-                    const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 4.0),
+                    const EdgeInsets.only(left: 8.0, right: 8.0, bottom: 8.0),
                 child: Text(
                   timestamp,
                   style: TextStyle(
