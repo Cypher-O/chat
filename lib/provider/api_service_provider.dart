@@ -27,7 +27,8 @@ class ApiServiceProvider extends ChangeNotifier {
     final response = await _apiService.getUserData(token);
     if (response.statusCode == 200) {
       final userData = jsonDecode(response.body);
-      final userId = userData['data']['id']?.toString(); // Check for null and convert to String
+      // Check for null and convert to String
+      final userId = userData['data']['id']?.toString(); 
       return response;
     } else {
       throw Exception('Failed to get user data');
