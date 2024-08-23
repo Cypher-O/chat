@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:chat/model/conversation.dart';
 import 'package:chat/provider/api_service_provider.dart';
+import 'package:chat/services/websocket_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -14,11 +16,41 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   List<Conversation> _recentConversations = [];
   String _userId = '';
+  late WebSocketService _webSocketService;
+  late ApiServiceProvider _apiServiceProvider;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _apiServiceProvider =
+        Provider.of<ApiServiceProvider>(context, listen: false);
+    _webSocketService = Provider.of<WebSocketService>(context, listen: false);
+    _ensureWebSocketConnection();
+    _webSocketService.addListener(_handleWebSocketStateChange);
+  }
+
+    void _handleWebSocketStateChange() {
+    if (!_webSocketService.isConnected) {
+      _ensureWebSocketConnection();
+    }
+  }
+
+  Future<void> _ensureWebSocketConnection() async {
+    if (!_webSocketService.isConnected) {
+      String? token = await _apiServiceProvider.getToken();
+      if (token != null) {
+        await _webSocketService.connect(token);
+      } else {
+        log('Error: Token is null');
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _webSocketService.removeListener(_handleWebSocketStateChange);
+    super.dispose();
   }
 
   Future<void> _loadUserData() async {
@@ -33,10 +65,10 @@ class HomeScreenState extends State<HomeScreen> {
       if (_userId.isNotEmpty) {
         await _loadRecentConversations();
       } else {
-        debugPrint('Error: userId is null or empty');
+        log('Error: userId is null or empty');
       }
     } catch (e) {
-      debugPrint('Error loading user data: $e');
+      log('Error loading user data: $e');
     }
   }
 
@@ -66,10 +98,10 @@ class HomeScreenState extends State<HomeScreen> {
           _recentConversations = recentConversations;
         });
       } else {
-        debugPrint('Error: Invalid response format');
+        log('Error: Invalid response format');
       }
     } catch (e) {
-      debugPrint('Error loading recent conversations: $e');
+      log('Error loading recent conversations: $e');
     }
   }
 
@@ -111,7 +143,7 @@ class HomeScreenState extends State<HomeScreen> {
           final avatarText = _getAvatarText(conversation.recipientUsername);
           final formattedUsername =
               _capitalizeFirstLetter(conversation.recipientUsername);
-          final updatedAt = _formatTimestamp(conversation.updatedAt!);
+          final updatedAt = _formatTimestamp(conversation.updatedAt);
 
           return ListTile(
             leading: CircleAvatar(

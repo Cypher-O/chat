@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:chat/provider/api_service_provider.dart';
 import 'package:chat/screens/register_screen.dart';
 import 'package:chat/services/websocket_service.dart';
@@ -44,12 +45,12 @@ class LoginScreenState extends State<LoginScreen> {
         // Fetch recent conversations
         final recentConversationsResponse =
             await apiServiceProvider.getRecentConversations();
-        debugPrint('Recent conversations: ${recentConversationsResponse.body}');
+        log("Recent conversations: ${recentConversationsResponse.body}");
 
         // Fetch conversation history
         final conversationsResponse =
             await apiServiceProvider.getAllConversations(userId);
-        debugPrint('Conversation history: ${conversationsResponse.body}');
+        log("Conversation history: ${conversationsResponse.body}");
 
         setState(() {
           _isLoading = false;
@@ -59,7 +60,7 @@ class LoginScreenState extends State<LoginScreen> {
         setState(() {
           _isLoading = false;
         });
-        debugPrint('Error getting user data: $e');
+        log("Error getting user data: $e");
       }
     } else {
       setState(() {
