@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'package:chat/model/conversation.dart';
@@ -13,34 +14,66 @@ class HomeScreen extends StatefulWidget {
   HomeScreenState createState() => HomeScreenState();
 }
 
-class HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMixin {
   List<Conversation> _recentConversations = [];
   String _userId = '';
   late WebSocketService _webSocketService;
   late ApiServiceProvider _apiServiceProvider;
+  late StreamSubscription<Conversation> _messageSubscription;
 
   @override
   void initState() {
     super.initState();
+    log('Initializing HomeScreen');
     _loadUserData();
     _apiServiceProvider =
         Provider.of<ApiServiceProvider>(context, listen: false);
     _webSocketService = Provider.of<WebSocketService>(context, listen: false);
     _ensureWebSocketConnection();
     _webSocketService.addListener(_handleWebSocketStateChange);
+    _webSocketService.registerUpdateCallback(updateConversations);
+
+    // Subscribe to WebSocket messages
+    _messageSubscription = _webSocketService.messageStream.listen((newMessage) {
+      log('Received message from WebSocket: ${newMessage.content}');
+      updateConversations(newMessage);
+    });
   }
 
-    void _handleWebSocketStateChange() {
+  void _handleWebSocketStateChange() {
     if (!_webSocketService.isConnected) {
       _ensureWebSocketConnection();
     }
   }
+
+  void updateConversations(Conversation newMessage) {
+    setState(() {
+      final index = _recentConversations.indexWhere((conversations) =>
+          (conversations.senderId == newMessage.senderId && conversations.recipientId == newMessage.recipientId) ||
+          (conversations.senderId == newMessage.recipientId && conversations.recipientId == newMessage.senderId));
+
+      if (index >= 0) {
+        _recentConversations[index] = _recentConversations[index].copyWith(
+          content: newMessage.content,
+          updatedAt: newMessage.createdAt,
+        );
+      } else {
+        _recentConversations.add(newMessage);
+      }
+
+      _recentConversations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    });
+  }
+
+  @override
+  bool get wantKeepAlive => true;
 
   Future<void> _ensureWebSocketConnection() async {
     if (!_webSocketService.isConnected) {
       String? token = await _apiServiceProvider.getToken();
       if (token != null) {
         await _webSocketService.connect(token);
+        log('WebSocket connected successfully');
       } else {
         log('Error: Token is null');
       }
@@ -49,7 +82,9 @@ class HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _webSocketService.unregisterUpdateCallback(updateConversations);
     _webSocketService.removeListener(_handleWebSocketStateChange);
+    _messageSubscription.cancel();
     super.dispose();
   }
 
@@ -137,6 +172,7 @@ class HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Home')),
       body: ListView.builder(
+        key: ValueKey<int>(_recentConversations.length), // Add this line
         itemCount: _recentConversations.length,
         itemBuilder: (context, index) {
           final conversation = _recentConversations[index];
@@ -146,6 +182,7 @@ class HomeScreenState extends State<HomeScreen> {
           final updatedAt = _formatTimestamp(conversation.updatedAt);
 
           return ListTile(
+            key: ValueKey<String>(conversation.id), // Add this line
             leading: CircleAvatar(
               backgroundColor: Colors.blueAccent,
               child:
@@ -170,4 +207,43 @@ class HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Scaffold(
+  //     appBar: AppBar(title: const Text('Home')),
+  //     body: ListView.builder(
+  //       itemCount: _recentConversations.length,
+  //       itemBuilder: (context, index) {
+  //         final conversation = _recentConversations[index];
+  //         final avatarText = _getAvatarText(conversation.recipientUsername);
+  //         final formattedUsername =
+  //             _capitalizeFirstLetter(conversation.recipientUsername);
+  //         final updatedAt = _formatTimestamp(conversation.updatedAt);
+
+  //         return ListTile(
+  //           leading: CircleAvatar(
+  //             backgroundColor: Colors.blueAccent,
+  //             child:
+  //                 Text(avatarText, style: const TextStyle(color: Colors.white)),
+  //           ),
+  //           title: Text(formattedUsername),
+  //           subtitle: Text(conversation.content),
+  //           trailing:
+  //               Text(updatedAt, style: TextStyle(color: Colors.grey[600])),
+  //           onTap: () {
+  //             Navigator.pushNamed(
+  //               context,
+  //               '/chat',
+  //               arguments: {
+  //                 'selectedConversation': conversation,
+  //                 'currentUserId': _userId,
+  //               },
+  //             );
+  //           },
+  //         );
+  //       },
+  //     ),
+  //   );
+  // }
 }

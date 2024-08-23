@@ -31,4 +31,26 @@ class Conversation {
       recipientUsername: map['recipient_username'] ?? '',
     );
   }
+
+   Conversation copyWith({
+    String? id,
+    String? senderId,
+    String? recipientId,
+    String? content,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? senderUsername,
+    String? recipientUsername,
+  }) {
+    return Conversation(
+      id: id ?? this.id,
+      senderId: senderId ?? this.senderId,
+      recipientId: recipientId ?? this.recipientId,
+      content: content ?? this.content,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      senderUsername: senderUsername ?? this.senderUsername,
+      recipientUsername: recipientUsername ?? this.recipientUsername,
+    );
+  }
 }
