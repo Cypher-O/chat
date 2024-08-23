@@ -111,7 +111,7 @@ class HomeScreenState extends State<HomeScreen> {
           final avatarText = _getAvatarText(conversation.recipientUsername);
           final formattedUsername =
               _capitalizeFirstLetter(conversation.recipientUsername);
-          final updatedAt = _formatTimestamp(conversation.updatedAt);
+          final updatedAt = _formatTimestamp(conversation.updatedAt!);
 
           return ListTile(
             leading: CircleAvatar(
