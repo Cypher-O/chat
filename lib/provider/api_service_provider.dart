@@ -20,29 +20,15 @@ class ApiServiceProvider extends ChangeNotifier {
   Future<http.Response> loginUser(Map<String, dynamic> credentials) {
     return _apiService.loginUser(credentials);
   }
-
-  // Future<http.Response> getUserData() async {
-  //   final token = await getToken();
-  //   return await _apiService.getUserData(token!);
-  // }
-
-  // Future<http.Response> getRecentConversations() async {
-  //   final token = await getToken();
-  //   return await _apiService.getRecentConversation(token!);
-  // }
-
-  // Future<http.Response> getAllConversations(int userId) async {
-  //   final token = await getToken();
-  //   return await _apiService.getAllConversations(token!, userId);
-  // }
-
+  
   Future<http.Response> getUserData() async {
   final token = await getToken();
   if (token != null) {
     final response = await _apiService.getUserData(token);
     if (response.statusCode == 200) {
       final userData = jsonDecode(response.body);
-      final userId = userData['data']['id']?.toString(); // Check for null and convert to String
+      // Check for null and convert to String
+      final userId = userData['data']['id']?.toString(); 
       return response;
     } else {
       throw Exception('Failed to get user data');
@@ -51,15 +37,6 @@ class ApiServiceProvider extends ChangeNotifier {
     throw Exception('Token is null');
   }
 }
-
-  //   Future<http.Response> getUserData() async {
-  //   final token = await getToken();
-  //   if (token != null) {
-  //     return await _apiService.getUserData(token);
-  //   } else {
-  //     throw Exception('Token is null');
-  //   }
-  // }
 
   Future<http.Response> getRecentConversations() async {
     final token = await getToken();

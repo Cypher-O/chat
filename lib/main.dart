@@ -1,3 +1,4 @@
+import 'package:chat/model/conversation.dart';
 import 'package:chat/provider/api_service_provider.dart';
 import 'package:chat/screens/chat_screen.dart';
 import 'package:chat/screens/home_screen.dart';
@@ -23,10 +24,20 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         home: const LoginScreen(),
+        debugShowCheckedModeBanner: false,
         routes: {
           '/register': (context) => const RegisterScreen(),
-          // '/home': (context) => const HomeScreen(),
-          '/chat': (context) => const ChatScreen(),
+          '/home': (context) => const HomeScreen(),
+          '/chat': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments as Map;
+            final selectedConversation =
+                args['selectedConversation'] as Conversation;
+            final currentUserId = args['currentUserId'] as String;
+            return ChatScreen(
+              selectedConversation: selectedConversation,
+              currentUserId: currentUserId,
+            );
+          },
         },
       ),
     );

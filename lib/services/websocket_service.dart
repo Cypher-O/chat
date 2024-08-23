@@ -1,37 +1,101 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:chat/model/conversation.dart';
 
 class WebSocketService extends ChangeNotifier {
-  WebSocketChannel? channel;
+  WebSocketChannel? _channel;
+  final StreamController<Conversation> _messageController =
+      StreamController<Conversation>.broadcast();
+  bool _isConnected = false;
+  String? _token;
+
+  bool get isConnected => _isConnected;
+  final List<Function(Conversation)> _updateCallbacks = [];
 
   Future<void> connect(String token) async {
-    final url = "wss://chat-api-ey7r.onrender.com/ws?token=$token";
+    if (_isConnected && _token == token) return;
+
+    _token = token;
+    await _establishConnection();
+  }
+
+  Future<void> _establishConnection() async {
+    final url = "wss://chat-api-ey7r.onrender.com/ws?token=$_token";
     try {
-      channel = await WebSocketChannel.connect(Uri.parse(url));
-      debugPrint("Connected to websocket successfully");
+      _channel?.sink.close();
+      _channel = WebSocketChannel.connect(Uri.parse(url));
+      _isConnected = true;
+      log("Connected to WebSocket successfully");
+
+      // _channel!.stream.listen((message) {
+      //   final data = jsonDecode(message);
+      //   final conversation = Conversation.fromMap(data);
+      //   _messageController.add(conversation);
+      // },
+      _channel!.stream.listen((message) {
+        log('WebSocket received message: $message');
+        final data = jsonDecode(message);
+        final conversation = Conversation.fromMap(data);
+        _messageController.add(conversation);
+        for (var callback in _updateCallbacks) {
+          callback(conversation);
+        }
+      }, onError: (error) {
+        log("WebSocket error: $error");
+        _messageController.addError(error);
+        _handleReconnection();
+      }, onDone: () {
+        log("Websocket closed");
+        _isConnected = false;
+        _handleReconnection();
+      });
+
       notifyListeners();
     } catch (e) {
-      debugPrint('Error connecting to WebSocket: $e');
+      log("Error connecting to WebSocket: $e");
+      _handleReconnection();
     }
   }
 
+  void _handleReconnection() {
+    Future.delayed(const Duration(seconds: 30), () {
+      if (!_isConnected && _token != null) {
+        _establishConnection();
+      }
+    });
+  }
+
+  void registerUpdateCallback(Function(Conversation) callback) {
+    _updateCallbacks.add(callback);
+  }
+
+  void unregisterUpdateCallback(Function(Conversation) callback) {
+    _updateCallbacks.remove(callback);
+  }
+
   void sendMessage(String recipientId, String content) {
-    if (channel != null) {
+    if (_isConnected) {
       final message = {
         'recipientId': recipientId,
         'content': content,
       };
-      channel!.sink.add(jsonEncode(message));
-      debugPrint("message sent successfully");
+      _channel!.sink.add(jsonEncode(message));
+      log("Message sent successfully");
     } else {
-      debugPrint('Error: WebSocket channel is not connected.');
+      log("Error: WebSocket channel is not connected");
     }
   }
 
-  Stream? get messages => channel?.stream;
+  Stream<Conversation> get messageStream => _messageController.stream;
 
   void disconnect() {
-    channel?.sink.close();
+    if (_isConnected) {
+      _channel?.sink.close();
+      _isConnected = false;
+      notifyListeners();
+    }
   }
 }
